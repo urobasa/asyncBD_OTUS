@@ -80,16 +80,6 @@ async def async_main():
         logger.info("Closing database connection...")
         await engine.dispose()
 
-#    await create_tables(engine)
-#    users_data, posts_data = await asyncio.gather(
-#        fetch_users_data(),
-#        fetch_posts_data(),
-#    )
-#    async with Session() as session:
-#        await add_users_to_db(session, users_data)
-#        await add_posts_to_db(session, posts_data)
-#    await engine.dispose()
-
 def main():
     asyncio.run(async_main())
 
