@@ -12,6 +12,7 @@
   (используйте полученные из запроса данные, передайте их в функцию для добавления в БД)
 - закрытие соединения с БД
 """
+import logging
 import asyncio
 from typing import List, Dict
 
@@ -19,6 +20,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from jsonplaceholder_requests import fetch_users_data, fetch_posts_data
 from models import engine, Base, Session, User, Post
+
+
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 async def create_tables(engine: AsyncEngine):
     async with engine.begin() as conn:
@@ -49,18 +57,38 @@ async def add_posts_to_db(session: Session, posts_data: List[Dict]):
     await session.commit()
 
 async def async_main():
-    await create_tables(engine)
+    try:
+        logger.info("Creating tables...")
+        await create_tables(engine)
 
-    users_data, posts_data = await asyncio.gather(
-        fetch_users_data(),
-        fetch_posts_data(),
-    )
+        logger.info("Fetching users and posts data...")
+        users_data, posts_data = await asyncio.gather(
+            fetch_users_data(),
+            fetch_posts_data(),
+        )
 
-    async with Session() as session:
-        await add_users_to_db(session, users_data)
-        await add_posts_to_db(session, posts_data)
+        async with Session() as session:
+            logger.info("Adding users to the database...")
+            await add_users_to_db(session, users_data)
+            logger.info("Adding posts to the database...")
+            await add_posts_to_db(session, posts_data)
 
-    await engine.dispose()
+        logger.info("Data successfully added to the database.")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+    finally:
+        logger.info("Closing database connection...")
+        await engine.dispose()
+
+#    await create_tables(engine)
+#    users_data, posts_data = await asyncio.gather(
+#        fetch_users_data(),
+#        fetch_posts_data(),
+#    )
+#    async with Session() as session:
+#        await add_users_to_db(session, users_data)
+#        await add_posts_to_db(session, posts_data)
+#    await engine.dispose()
 
 def main():
     asyncio.run(async_main())
